@@ -11,7 +11,25 @@ import (
 func (e *eventUseCase) GenerateReport() string {
 	competitors := e.repo.GetAll()
 	sort.Slice(competitors, func(i, j int) bool {
-		return competitors[i].StartTime.Before(competitors[j].StartTime)
+		a := competitors[i]
+		b := competitors[j]
+
+		if a.Status == domain.NotFinished || b.Status == domain.NotFinished ||
+			a.Status == domain.Disqualified || b.Status == domain.Disqualified {
+			return a.ID < b.ID
+		}
+		var aFinishTime, bFinishTime time.Time
+
+		if len(a.LapStartTimes) > 0 && len(a.LapDurations) > 0 {
+			lastLapIdx := len(a.LapStartTimes) - 1
+			aFinishTime = a.LapStartTimes[lastLapIdx].Add(a.LapDurations[lastLapIdx])
+		}
+
+		if len(b.LapStartTimes) > 0 && len(b.LapDurations) > 0 {
+			lastLapIdx := len(b.LapStartTimes) - 1
+			bFinishTime = b.LapStartTimes[lastLapIdx].Add(b.LapDurations[lastLapIdx])
+		}
+		return aFinishTime.Sub(a.PlannedStartTime) < bFinishTime.Sub(b.PlannedStartTime)
 	})
 
 	var report strings.Builder
