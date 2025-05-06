@@ -1,0 +1,22 @@
+package controllers
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func (e *eventController) HitTarget(message string) (string, error) {
+	event, err := parse(message)
+	if err != nil {
+		return "", err
+	}
+
+	if len(event.Params) != 1 {
+		return "", fmt.Errorf("%v: only target is required", ErrInvalidParams)
+	}
+	target, err := strconv.Atoi(event.Params[0])
+	if err != nil {
+		return "", err
+	}
+	return event.String(), e.firingRangeUseCase.HitTarget(event.CompetitorID, target)
+}
